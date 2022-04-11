@@ -814,6 +814,7 @@ namespace gcopter
             Eigen::Map<Eigen::VectorXd> xi(x.data() + temporalDim, spatialDim);
 
             setInitial(shortPath, allocSpeed, pieceIdx, points, times);
+            //对代价函数求时间的梯度
             backwardT(times, tau);
             backwardP(points, vPolyIdx, vPolytopes, xi);
 

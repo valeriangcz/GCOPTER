@@ -114,6 +114,7 @@ public:
 
     inline void mapCallBack(const sensor_msgs::PointCloud2::ConstPtr &msg)
     {
+        std::cout<<"mapCallback\n";
         if (!mapInitialized)
         {
             size_t cur = 0;
@@ -142,6 +143,7 @@ public:
 
     inline void plan()
     {
+        std::cout<<"plan\n";
         if (startGoal.size() == 2)
         {
             std::vector<Eigen::Vector3d> route;
@@ -230,6 +232,7 @@ public:
 
     inline void targetCallBack(const geometry_msgs::PoseStamped::ConstPtr &msg)
     {
+        std::cout<<"targetCallback\n";
         if (mapInitialized)
         {
             if (startGoal.size() >= 2)
@@ -257,6 +260,8 @@ public:
 
     inline void process()
     {
+        std::cout<<"process\n";
+
         Eigen::VectorXd physicalParams(6);
         physicalParams(0) = config.vehicleMass;
         physicalParams(1) = config.gravAcc;
@@ -310,7 +315,7 @@ int main(int argc, char **argv)
 
     GlobalPlanner global_planner(Config(ros::NodeHandle("~")), nh_);
 
-    ros::Rate lr(1000);
+    ros::Rate lr(1);
     while (ros::ok())
     {
         global_planner.process();

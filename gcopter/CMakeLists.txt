@@ -32,3 +32,8 @@ target_link_libraries(global_planning
   ${OMPL_LIBRARIES}
   ${catkin_LIBRARIES}
 )
+
+add_executable(for_test src/for_test.cpp)
+target_link_libraries(for_test
+  ${OMPL_LIBRARIES}
+  ${catkin_LIBRARIES})
