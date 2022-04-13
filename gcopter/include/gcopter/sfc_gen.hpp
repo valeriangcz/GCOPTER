@@ -55,6 +55,8 @@ namespace sfc_gen
 
         ompl::base::RealVectorBounds bounds(3);
         bounds.setLow(0, 0.0);
+        // std::cout <<"sfc_gen/lb="<<lb.transpose()<<std::endl;
+        // std::cout <<"sfc_gen/hb="<<hb.transpose()<<std::endl;
         bounds.setHigh(0, hb(0) - lb(0));
         bounds.setLow(1, 0.0);
         bounds.setHigh(1, hb(1) - lb(1));
@@ -72,6 +74,7 @@ namespace sfc_gen
                                                lb(1) + (*pos)[1],
                                                lb(2) + (*pos)[2]);
                 return mapPtr->query(position) == 0;
+                
             });
         si->setup();
 

@@ -483,7 +483,7 @@ namespace gcopter
             Eigen::Map<Eigen::VectorXd> gradXi(g.data() + dimTau, dimXi);
 
             forwardT(tau, obj.times);
-            forwardP(xi, obj.vPolyIdx, obj.vPolytopes, obj.points);
+            forwardP(xi, obj.vPolyIdx, obj.vPolytopes, obj.points);//由xi 计算受到凸包约束的points
 
             double cost;
             obj.minco.setParameters(obj.points, obj.times);
@@ -759,7 +759,8 @@ namespace gcopter
             penaltyWt = penaltyWeights;
             physicalPm = physicalParams;
             allocSpeed = magnitudeBd(0) * 3.0;
-
+            //根据起点中点和中间凸包生成优化轨迹初值
+            //shortPath每一列都是一个中间点的三维坐标，minco轨迹的初值
             getShortestPath(headPVA.col(0), tailPVA.col(0),
                             vPolytopes, smoothEps, shortPath);
             const Eigen::Matrix3Xd deltas = shortPath.rightCols(polyN) - shortPath.leftCols(polyN);
@@ -813,11 +814,14 @@ namespace gcopter
             Eigen::Map<Eigen::VectorXd> tau(x.data(), temporalDim);
             Eigen::Map<Eigen::VectorXd> xi(x.data() + temporalDim, spatialDim);
 
+            //根据前端的凸多面体生成轨迹的端点和时间段
             setInitial(shortPath, allocSpeed, pieceIdx, points, times);
-            //对代价函数求时间的梯度
+            
+            //优化前逆推一步，为新的优化变量提供初值
             backwardT(times, tau);
             backwardP(points, vPolyIdx, vPolytopes, xi);
-
+            
+            //执行优化
             double minCostFunctional;
             lbfgs_params.mem_size = 256;
             lbfgs_params.past = 3;
@@ -834,7 +838,7 @@ namespace gcopter
                                             lbfgs_params);
 
             if (ret >= 0)
-            {
+            {   //优化成功后，将优化决策变量映射到时间和空间点上，并生成轨迹，储存到traj中
                 forwardT(tau, times);
                 forwardP(xi, vPolyIdx, vPolytopes, points);
                 minco.setParameters(points, times);

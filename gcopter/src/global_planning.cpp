@@ -114,7 +114,6 @@ public:
 
     inline void mapCallBack(const sensor_msgs::PointCloud2::ConstPtr &msg)
     {
-        std::cout<<"mapCallback\n";
         if (!mapInitialized)
         {
             size_t cur = 0;
@@ -134,7 +133,6 @@ public:
                                                      fdata[cur + 1],
                                                      fdata[cur + 2]));
             }
-
             voxelMap.dilate(std::ceil(config.dilateRadius / voxelMap.getScale()));
 
             mapInitialized = true;
@@ -143,7 +141,6 @@ public:
 
     inline void plan()
     {
-        std::cout<<"plan\n";
         if (startGoal.size() == 2)
         {
             std::vector<Eigen::Vector3d> route;
@@ -232,7 +229,6 @@ public:
 
     inline void targetCallBack(const geometry_msgs::PoseStamped::ConstPtr &msg)
     {
-        std::cout<<"targetCallback\n";
         if (mapInitialized)
         {
             if (startGoal.size() >= 2)
@@ -260,7 +256,6 @@ public:
 
     inline void process()
     {
-        std::cout<<"process\n";
 
         Eigen::VectorXd physicalParams(6);
         physicalParams(0) = config.vehicleMass;
