@@ -99,7 +99,7 @@ namespace gcopter
             }
             return;
         }
-
+        
         template <typename EIGENVEC>
         static inline void backwardT(const Eigen::VectorXd &T,
                                      EIGENVEC &tau)
@@ -107,7 +107,7 @@ namespace gcopter
             const int sizeT = T.size();
             tau.resize(sizeT);
             for (int i = 0; i < sizeT; i++)
-            {
+            {   //使用分段函数近似ln(Ti/TM)
                 tau(i) = T(i) > 1.0
                              ? (sqrt(2.0 * T(i) - 1.0) - 1.0)
                              : (1.0 - sqrt(2.0 / T(i) - 1.0));
@@ -168,8 +168,8 @@ namespace gcopter
 
             const double sqrNormXi = xi.squaredNorm();
             const double invNormXi = 1.0 / sqrt(sqrNormXi);
-            const Eigen::VectorXd unitXi = xi * invNormXi;
-            const Eigen::VectorXd r = unitXi.head(n - 1);
+            const Eigen::VectorXd unitXi = xi * invNormXi;//归一化
+            const Eigen::VectorXd r = unitXi.head(n - 1);//获取前n-1个元素
             const Eigen::Vector3d delta = ovPoly.rightCols(n - 1) * r.cwiseProduct(r) +
                                           ovPoly.col(1) - ovPoly.col(0);
 
@@ -198,7 +198,7 @@ namespace gcopter
                                      const PolyhedraV &vPolys,
                                      EIGENVEC &xi)
         {
-            const int sizeP = P.cols();
+            const int sizeP = P.cols();//凸包内点的个数
 
             double minSqrD;
             lbfgs::lbfgs_parameter_t tiny_nls_params;
@@ -210,8 +210,8 @@ namespace gcopter
             Eigen::Matrix3Xd ovPoly;
             for (int i = 0, j = 0, k, l; i < sizeP; i++, j += k)
             {
-                l = vIdx(i);
-                k = vPolys[l].cols();
+                l = vIdx(i);//第i个点位于第l个凸包内部
+                k = vPolys[l].cols();//第l个凸包共有k个连接顶点的向量
 
                 ovPoly.resize(3, k + 1);
                 ovPoly.col(0) = P.col(i);
@@ -226,7 +226,7 @@ namespace gcopter
                                       &ovPoly,
                                       tiny_nls_params);
 
-                xi.segment(j, k) = x;
+                xi.segment(j, k) = x;//每一个凸包内的点，会给k个自由的决策变量提供初值
             }
 
             return;
@@ -481,28 +481,30 @@ namespace gcopter
             Eigen::Map<const Eigen::VectorXd> xi(x.data() + dimTau, dimXi);
             Eigen::Map<Eigen::VectorXd> gradTau(g.data(), dimTau);
             Eigen::Map<Eigen::VectorXd> gradXi(g.data() + dimTau, dimXi);
-
+            //从自由变量值计算出带约束变量的值
             forwardT(tau, obj.times);
             forwardP(xi, obj.vPolyIdx, obj.vPolytopes, obj.points);//由xi 计算受到凸包约束的points
 
             double cost;
             obj.minco.setParameters(obj.points, obj.times);
+            //计算控制cost
             obj.minco.getEnergy(cost);
+            //计算cost对时间和空间约束的微分
             obj.minco.getEnergyPartialGradByCoeffs(obj.partialGradByCoeffs);
             obj.minco.getEnergyPartialGradByTimes(obj.partialGradByTimes);
-
+            //计算惩罚函数，惩罚函数的具体形式和接口
             attachPenaltyFunctional(obj.times, obj.minco.getCoeffs(),
                                     obj.hPolyIdx, obj.hPolytopes,
                                     obj.smoothEps, obj.integralRes,
                                     obj.magnitudeBd, obj.penaltyWt, obj.flatmap,
                                     cost, obj.partialGradByTimes, obj.partialGradByCoeffs);
-
+            //计算总目标函数的梯度，
             obj.minco.propogateGrad(obj.partialGradByCoeffs, obj.partialGradByTimes,
                                     obj.gradByPoints, obj.gradByTimes);
 
             cost += weightT * obj.times.sum();
             obj.gradByTimes.array() += weightT;
-
+            //从带约束变量的值反推出自由变量的值
             backwardGradT(tau, obj.gradByTimes, gradTau);
             backwardGradP(xi, obj.vPolyIdx, obj.vPolytopes, obj.gradByPoints, gradXi);
             normRetrictionLayer(xi, obj.vPolyIdx, obj.vPolytopes, cost, gradXi);
@@ -777,9 +779,14 @@ namespace gcopter
 
             temporalDim = pieceN;
             spatialDim = 0;
+<<<<<<< HEAD
             vPolyIdx.resize(pieceN - 1);
             hPolyIdx.resize(pieceN);
             //判断轨迹在哪一个凸包内，由此计算空间上决策变量维数
+=======
+            vPolyIdx.resize(pieceN - 1);//每一个内点所在的凸包
+            hPolyIdx.resize(pieceN);//每一段轨迹所在的凸包
+>>>>>>> b6fca55c3674aeb9e9c2b51cfd755f55ea304583
             for (int i = 0, j = 0, k; i < polyN; i++)
             {
                 k = pieceIdx(i);
@@ -798,7 +805,7 @@ namespace gcopter
                     hPolyIdx(j) = i;
                 }
             }
-
+            //若使用 MINCO_S4NU, 有哪些需要进行改动
             // Setup for MINCO_S3NU, FlatnessMap, and L-BFGS solver
             minco.setConditions(headPVA, tailPVA, pieceN);
             flatmap.reset(physicalPm(0), physicalPm(1), physicalPm(2),

@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/opt/ros/noetic/include/**",
+        "/home/fast/ROS_ws/GCOPTR_ws/src/GCOPTER/gcopter/include/**",
+        "/home/fast/ROS_ws/GCOPTR_ws/src/GCOPTER/map_gen/mockamap/include/**",
+        "/home/fast/ROS_ws/GCOPTR_ws/src/using_markers/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

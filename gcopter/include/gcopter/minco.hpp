@@ -526,7 +526,7 @@ namespace minco
             }
             return;
         }
-
+        //交叉相乘项
         inline void getEnergy(double &energy) const
         {
             energy = 0.0;
