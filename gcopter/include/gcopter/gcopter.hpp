@@ -690,24 +690,25 @@ namespace gcopter
             return true;
         }
 
+        //根据凸包和最短距离得到每段轨迹的起点和重点，根据最大速度和最段距离计进行时间分配
         static inline void setInitial(const Eigen::Matrix3Xd &path,
                                       const double &speed,
                                       const Eigen::VectorXi &intervalNs,
                                       Eigen::Matrix3Xd &innerPoints,
                                       Eigen::VectorXd &timeAlloc)
         {
-            const int sizeM = intervalNs.size();
-            const int sizeN = intervalNs.sum();
+            const int sizeM = intervalNs.size();//凸包个数
+            const int sizeN = intervalNs.sum();//轨迹段数
             innerPoints.resize(3, sizeN - 1);
             timeAlloc.resize(sizeN);
 
             Eigen::Vector3d a, b, c;
             for (int i = 0, j = 0, k = 0, l; i < sizeM; i++)
             {
-                l = intervalNs(i);
+                l = intervalNs(i);//第i个凸包轨迹个数
                 a = path.col(i);
                 b = path.col(i + 1);
-                c = (b - a) / l;
+                c = (b - a) / l;//第i个凸包内单个轨迹直线距离
                 timeAlloc.segment(j, l).setConstant(c.norm() / speed);
                 j += l;
                 for (int m = 0; m < l; m++)
@@ -760,11 +761,17 @@ namespace gcopter
             physicalPm = physicalParams;
             allocSpeed = magnitudeBd(0) * 3.0;
             //根据起点中点和中间凸包生成优化轨迹初值
-            //shortPath每一列都是一个中间点的三维坐标，minco轨迹的初值
+            //shortPath每一列都是一个中间点的三维坐标，位于两个凸包交集的位置
             getShortestPath(headPVA.col(0), tailPVA.col(0),
                             vPolytopes, smoothEps, shortPath);
             const Eigen::Matrix3Xd deltas = shortPath.rightCols(polyN) - shortPath.leftCols(polyN);
-            pieceIdx = (deltas.colwise().norm() / lengthPerPiece).cast<int>().transpose();
+            //记录每一个凸包里面有多少段轨迹
+            pieceIdx = (deltas.colwise().norm() / lengthPerPiece).cast<int>();//.transpose();
+        
+            // std::cout <<"gcopter/setup\n";
+            // std::cout << "/deltas.colwise().norm()="<<deltas.colwise().norm() <<std::endl;
+            // std::cout<<"/pieceIdx="<<pieceIdx.transpose() <<std::endl;
+            // std::cout<<"/lengthPerPiece="<<lengthPerPiece <<std::endl;
             pieceIdx.array() += 1;
             pieceN = pieceIdx.sum();
 
@@ -772,6 +779,7 @@ namespace gcopter
             spatialDim = 0;
             vPolyIdx.resize(pieceN - 1);
             hPolyIdx.resize(pieceN);
+            //判断轨迹在哪一个凸包内，由此计算空间上决策变量维数
             for (int i = 0, j = 0, k; i < polyN; i++)
             {
                 k = pieceIdx(i);

@@ -1,7 +1,6 @@
 #include<iostream>
 #include<string>
 #include<Eigen/Eigen>
-#include<sensor_msgs/PointCloud2.h>
 #include"gcopter/lbfgs.hpp"
 #include"gcopter/sfc_gen.hpp"
 using namespace std;
@@ -17,17 +16,11 @@ void eigen_map(){
 
 void eigne_normal(){
     Eigen::Matrix3d x;
-    Eigen::MatrixXd y, z;
-    x << 1,2,3,4,5,6,7,8,9;
-    // cout << x.col(0) <<endl;
-    y = x.rightCols(2);
-    z = x.leftCols(2);
-    cout <<"y=\n";
-    cout << y <<endl;
-    cout <<"z=\n";
-    cout << z <<endl;
+    Eigen::Vector3d v1,v2;
+    v1 << 1,2,3; v2<< 4,5,6; 
+    x << v1, v2,v1;
+    cout << v1.cols() <<endl;
 }
-
 void PointCloud2Msg_demo(){
     
 }
@@ -79,8 +72,8 @@ int main(){
     // L_1.optimize();
 
     // eigen_map();
-    // eigne_normal();
-    cout << "hello\n";
+    eigne_normal();
+    // cout << "hello\n";
     // std::cout<<"for test\n";
     return 0;
 }

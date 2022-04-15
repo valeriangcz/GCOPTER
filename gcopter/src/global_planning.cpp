@@ -152,8 +152,11 @@ public:
                                                    route);
             std::vector<Eigen::MatrixX4d> hPolys;
             std::vector<Eigen::Vector3d> pc;
+
+            //pc代表
             voxelMap.getSurf(pc);
 
+            //有无最大体积限制
             sfc_gen::convexCover(route,
                                  pc,
                                  voxelMap.getOrigin(),
