@@ -19,13 +19,12 @@ void eigne_normal(){
     Eigen::Matrix3d x;
     Eigen::MatrixXd y, z;
     x << 1,2,3,4,5,6,7,8,9;
-    // cout << x.col(0) <<endl;
-    y = x.rightCols(2);
-    z = x.leftCols(2);
-    cout <<"y=\n";
-    cout << y <<endl;
-    cout <<"z=\n";
-    cout << z <<endl;
+    Eigen::VectorXd vec;
+    vec.resize(4);
+    vec<<1,2,3,4;
+    cout << vec.head(0)<<endl;
+    // cout << vec.head(4) <<endl;
+
 }
 
 void PointCloud2Msg_demo(){
@@ -52,7 +51,7 @@ public:
                                const double step,
                                const int k,
                                const int ls){
-                                   L_BFGS &l = *(L_BFGS*) ptr;
+                                //    L_BFGS &l = *(L_BFGS*) ptr;
                                    
                                    return 0;
     }
@@ -79,8 +78,8 @@ int main(){
     // L_1.optimize();
 
     // eigen_map();
-    // eigne_normal();
-    cout << "hello\n";
+    eigne_normal();
+    // cout << "hello\n";
     // std::cout<<"for test\n";
     return 0;
 }
