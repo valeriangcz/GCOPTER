@@ -50,7 +50,7 @@ namespace flatness
 
             return;
         }
-
+        //通过速度加速度和机动度计算角速度和旋转
         inline void forward(const Eigen::Vector3d &vel,
                             const Eigen::Vector3d &acc,
                             const Eigen::Vector3d &jer,
@@ -264,7 +264,7 @@ namespace flatness
 
         double v0, v1, v2, a0, a1, a2, v_dot_a;
         double z0, z1, z2, dz0, dz1, dz2;
-        double cp_term, w_term, dh_over_m;
+        double cp_term, w_term/*segma*||v||*/, dh_over_m;
         double zu_sqr_norm, zu_norm, zu0, zu1, zu2;
         double zu_sqr0, zu_sqr1, zu_sqr2, zu01, zu12, zu02;
         double ng00, ng01, ng02, ng11, ng12, ng22, ng_den;

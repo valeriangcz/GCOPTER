@@ -140,18 +140,18 @@ namespace gcopter
             return;
         }
 
-        static inline void forwardP(const Eigen::VectorXd &xi,
+        static inline void forwardP(const Eigen::VectorXd &xi,//自由变量
                                     const Eigen::VectorXi &vIdx,
                                     const PolyhedraV &vPolys,
-                                    Eigen::Matrix3Xd &P)
+                                    Eigen::Matrix3Xd &P)//轨迹上的点
         {
             const int sizeP = vIdx.size();
             P.resize(3, sizeP);
             Eigen::VectorXd q;
             for (int i = 0, j = 0, k, l; i < sizeP; i++, j += k)
             {
-                l = vIdx(i);
-                k = vPolys[l].cols();
+                l = vIdx(i);//第i个点在l个凸包内
+                k = vPolys[l].cols();//第l个凸包有k个顶点
                 q = xi.segment(j, k).normalized().head(k - 1);
                 P.col(i) = vPolys[l].rightCols(k - 1) * q.cwiseProduct(q) +
                            vPolys[l].col(0);
@@ -415,14 +415,14 @@ namespace gcopter
                         //尽量使轨迹在凸包的中心点位置
                         if (smoothedL1(violaPos, smoothFactor, violaPosPena, violaPosPenaD))
                         {
-                            gradPos += weightPos * violaPosPenaD * outerNormal;
+                            gradPos += weightPos * violaPosPenaD * outerNormal;//gradPos，惩罚函数对位置的梯度
                             pena += weightPos * violaPosPena;
                         }
                     }
 
                     if (smoothedL1(violaVel, smoothFactor, violaVelPena, violaVelPenaD))
                     {
-                        gradVel += weightVel * violaVelPenaD * 2.0 * vel;
+                        gradVel += weightVel * violaVelPenaD * 2.0 * vel;//惩罚函数对速度的梯度
                         pena += weightVel * violaVelPena;
                     }
 
@@ -452,17 +452,19 @@ namespace gcopter
 
                     node = (j == 0 || j == integralResolution) ? 0.5 : 1.0;
                     alpha = j * integralFrac;
+
+                    //梯度计算，如何进行拆分
                     gradC.block<6, 3>(i * 6, 0) += (beta0 * totalGradPos.transpose() +
                                                     beta1 * totalGradVel.transpose() +
                                                     beta2 * totalGradAcc.transpose() +
                                                     beta3 * totalGradJer.transpose()) *
-                                                   node * step;
+                                                   node * step;//不包括能量消耗的惩罚函数对系数矩阵的梯度
                     gradT(i) += (totalGradPos.dot(vel) +
                                  totalGradVel.dot(acc) +
                                  totalGradAcc.dot(jer) +
                                  totalGradJer.dot(sna)) *
                                     alpha * node * step +
-                                node * integralFrac * pena;
+                                node * integralFrac * pena;//不包括能量消耗惩罚函数对时间的梯度
                     cost += node * step * pena;
                 }
             }
@@ -484,15 +486,15 @@ namespace gcopter
             Eigen::Map<Eigen::VectorXd> gradXi(g.data() + dimTau, dimXi);
             //从自由变量值计算出带约束变量的值
             forwardT(tau, obj.times);
-            forwardP(xi, obj.vPolyIdx, obj.vPolytopes, obj.points);//由xi 计算受到凸包约束的points
+            forwardP(xi, obj.vPolyIdx, obj.vPolytopes, obj.points);//
 
             double cost;
             obj.minco.setParameters(obj.points, obj.times);//完成这一步后b的系数
             //计算控制cost
-            obj.minco.getEnergy(cost);//这是那一部分的cost，如何计算的
+            obj.minco.getEnergy(cost);//得到jerk平方和
             //计算cost对时间和空间约束的微分
-            obj.minco.getEnergyPartialGradByCoeffs(obj.partialGradByCoeffs);
-            obj.minco.getEnergyPartialGradByTimes(obj.partialGradByTimes);
+            obj.minco.getEnergyPartialGradByCoeffs(obj.partialGradByCoeffs);//计算能量部分对系数矩阵的梯度
+            obj.minco.getEnergyPartialGradByTimes(obj.partialGradByTimes);//计算能量部分对时间的梯度
             //计算惩罚函数，惩罚函数的具体形式和接口
             attachPenaltyFunctional(obj.times, obj.minco.getCoeffs(),
                                     obj.hPolyIdx, obj.hPolytopes,
