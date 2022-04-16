@@ -16,21 +16,18 @@ void eigen_map(){
 
 void eigne_normal(){
     Eigen::Matrix3d x;
-<<<<<<< HEAD
-    Eigen::Vector3d v1,v2;
-    v1 << 1,2,3; v2<< 4,5,6; 
-    x << v1, v2,v1;
-    cout << v1.cols() <<endl;
-=======
     Eigen::MatrixXd y, z;
     x << 1,2,3,4,5,6,7,8,9;
-    Eigen::VectorXd vec;
-    vec.resize(4);
-    vec<<1,2,3,4;
-    cout << vec.head(0)<<endl;
+    // Eigen::VectorXd vec;
+    // vec.resize(4);
+    // vec<<1,2,3,4;
+    // cout << vec.head(0)<<endl;
     // cout << vec.head(4) <<endl;
+    cout << x <<endl;
+    
+    cout << x.block<1,1>(0,0) <<endl;
+    cout << x.block(1,1,1,1) <<endl;
 
->>>>>>> b6fca55c3674aeb9e9c2b51cfd755f55ea304583
 }
 void PointCloud2Msg_demo(){
     

@@ -55,13 +55,13 @@ namespace gcopter
         Eigen::Matrix3d headPVA;
         Eigen::Matrix3d tailPVA;
 
-        PolyhedraV vPolytopes;
-        PolyhedraH hPolytopes;
-        Eigen::Matrix3Xd shortPath;
+        PolyhedraV vPolytopes;//凸包的v表达
+        PolyhedraH hPolytopes;//凸包的h表达
+        Eigen::Matrix3Xd shortPath;//凸包交集内点与起点终点
 
-        Eigen::VectorXi pieceIdx;
-        Eigen::VectorXi vPolyIdx;
-        Eigen::VectorXi hPolyIdx;
+        Eigen::VectorXi pieceIdx;//每一个凸包内轨迹个数
+        Eigen::VectorXi vPolyIdx;//每一个轨迹起点终点在凸包的索引
+        Eigen::VectorXi hPolyIdx;//每一段轨迹在凸包的索引
 
         int polyN;
         int pieceN;
@@ -370,14 +370,14 @@ namespace gcopter
             double node, pena;
 
             const int pieceNum = T.size();
-            const double integralFrac = 1.0 / integralResolution;
+            const double integralFrac = 1.0 / integralResolution;//决定梯形公式计算积分区间分段
             for (int i = 0; i < pieceNum; i++)
             {
                 const Eigen::Matrix<double, 6, 3> &c = coeffs.block<6, 3>(i * 6, 0);
-                step = T(i) * integralFrac;
+                step = T(i) * integralFrac;//梯形公式步长
                 for (int j = 0; j <= integralResolution; j++)
                 {
-                    s1 = j * step;
+                    s1 = j * step;//梯形区间起点
                     s2 = s1 * s1;
                     s3 = s2 * s1;
                     s4 = s2 * s2;
@@ -406,12 +406,13 @@ namespace gcopter
                     gradPos.setZero(), gradVel.setZero(), gradOmg.setZero();
                     pena = 0.0;
 
-                    L = hIdx(i);
-                    K = hPolys[L].rows();
+                    L = hIdx(i);//第i段轨迹在第L个凸包内
+                    K = hPolys[L].rows();//第L个凸包有K个约束条件
                     for (int k = 0; k < K; k++)
                     {
                         outerNormal = hPolys[L].block<1, 3>(k, 0);
-                        violaPos = outerNormal.dot(pos) + hPolys[L](k, 3);
+                        violaPos = outerNormal.dot(pos) + hPolys[L](k, 3);//计算Ax-b
+                        //尽量使轨迹在凸包的中心点位置
                         if (smoothedL1(violaPos, smoothFactor, violaPosPena, violaPosPenaD))
                         {
                             gradPos += weightPos * violaPosPenaD * outerNormal;
@@ -486,9 +487,9 @@ namespace gcopter
             forwardP(xi, obj.vPolyIdx, obj.vPolytopes, obj.points);//由xi 计算受到凸包约束的points
 
             double cost;
-            obj.minco.setParameters(obj.points, obj.times);
+            obj.minco.setParameters(obj.points, obj.times);//完成这一步后b的系数
             //计算控制cost
-            obj.minco.getEnergy(cost);
+            obj.minco.getEnergy(cost);//这是那一部分的cost，如何计算的
             //计算cost对时间和空间约束的微分
             obj.minco.getEnergyPartialGradByCoeffs(obj.partialGradByCoeffs);
             obj.minco.getEnergyPartialGradByTimes(obj.partialGradByTimes);
@@ -733,8 +734,8 @@ namespace gcopter
                           const Eigen::Matrix3d &terminalPVA,
                           const PolyhedraH &safeCorridor,
                           const double &lengthPerPiece,
-                          const double &smoothingFactor,
-                          const int &integralResolution,
+                          const double &smoothingFactor,//config文件1.0e-2
+                          const int &integralResolution,//config文件 16
                           const Eigen::VectorXd &magnitudeBounds,
                           const Eigen::VectorXd &penaltyWeights,
                           const Eigen::VectorXd &physicalParams)
@@ -770,23 +771,13 @@ namespace gcopter
             //记录每一个凸包里面有多少段轨迹
             pieceIdx = (deltas.colwise().norm() / lengthPerPiece).cast<int>();//.transpose();
         
-            // std::cout <<"gcopter/setup\n";
-            // std::cout << "/deltas.colwise().norm()="<<deltas.colwise().norm() <<std::endl;
-            // std::cout<<"/pieceIdx="<<pieceIdx.transpose() <<std::endl;
-            // std::cout<<"/lengthPerPiece="<<lengthPerPiece <<std::endl;
             pieceIdx.array() += 1;
             pieceN = pieceIdx.sum();
 
             temporalDim = pieceN;
             spatialDim = 0;
-<<<<<<< HEAD
-            vPolyIdx.resize(pieceN - 1);
-            hPolyIdx.resize(pieceN);
-            //判断轨迹在哪一个凸包内，由此计算空间上决策变量维数
-=======
             vPolyIdx.resize(pieceN - 1);//每一个内点所在的凸包
             hPolyIdx.resize(pieceN);//每一段轨迹所在的凸包
->>>>>>> b6fca55c3674aeb9e9c2b51cfd755f55ea304583
             for (int i = 0, j = 0, k; i < polyN; i++)
             {
                 k = pieceIdx(i);
