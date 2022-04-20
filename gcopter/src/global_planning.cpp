@@ -133,6 +133,7 @@ public:
                                                      fdata[cur + 1],
                                                      fdata[cur + 2]));
             }
+            //question_1:这里的“膨胀”对地图进行了什么操作
             voxelMap.dilate(std::ceil(config.dilateRadius / voxelMap.getScale()));
 
             mapInitialized = true;
@@ -153,10 +154,11 @@ public:
             std::vector<Eigen::MatrixX4d> hPolys;
             std::vector<Eigen::Vector3d> pc;
 
-            //pc代表
+            //question_2:pc代表什么
             voxelMap.getSurf(pc);
 
-            //有无最大体积限制
+            //question_3:凸包生成是否有最大体积限制，在比较空旷的环境中无解是因为凸包生成失败？
+            //实验室常用的凸包生成方法
             sfc_gen::convexCover(route,
                                  pc,
                                  voxelMap.getOrigin(),

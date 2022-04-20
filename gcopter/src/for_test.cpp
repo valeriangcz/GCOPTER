@@ -74,6 +74,18 @@ public:
 
     }
 };
+void use_minco(){
+    //map
+    //target
+    //costfuntion
+    //differental flatness map
+    //trajectory
+    //visualize
+}
+
+
+
+
 
 int main(){
     // L_BFGS L_1(2);

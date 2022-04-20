@@ -412,7 +412,7 @@ namespace gcopter
                     {
                         outerNormal = hPolys[L].block<1, 3>(k, 0);
                         violaPos = outerNormal.dot(pos) + hPolys[L](k, 3);//计算Ax-b
-                        //尽量使轨迹在凸包的中心点位置
+                        //question：尽量使轨迹在凸包的中心点位置？
                         if (smoothedL1(violaPos, smoothFactor, violaPosPena, violaPosPenaD))
                         {
                             gradPos += weightPos * violaPosPenaD * outerNormal;//gradPos，惩罚函数对位置的梯度
@@ -453,7 +453,7 @@ namespace gcopter
                     node = (j == 0 || j == integralResolution) ? 0.5 : 1.0;
                     alpha = j * integralFrac;
 
-                    //梯度计算，如何进行拆分
+                    //question: 梯度计算，如何进行拆分
                     gradC.block<6, 3>(i * 6, 0) += (beta0 * totalGradPos.transpose() +
                                                     beta1 * totalGradVel.transpose() +
                                                     beta2 * totalGradAcc.transpose() +
@@ -495,7 +495,7 @@ namespace gcopter
             //计算cost对时间和空间约束的微分
             obj.minco.getEnergyPartialGradByCoeffs(obj.partialGradByCoeffs);//计算能量部分对系数矩阵的梯度
             obj.minco.getEnergyPartialGradByTimes(obj.partialGradByTimes);//计算能量部分对时间的梯度
-            //计算惩罚函数，惩罚函数的具体形式和接口
+            //计算惩罚函数
             attachPenaltyFunctional(obj.times, obj.minco.getCoeffs(),
                                     obj.hPolyIdx, obj.hPolytopes,
                                     obj.smoothEps, obj.integralRes,
@@ -510,6 +510,7 @@ namespace gcopter
             //从带约束变量的值反推出自由变量的值
             backwardGradT(tau, obj.gradByTimes, gradTau);
             backwardGradP(xi, obj.vPolyIdx, obj.vPolytopes, obj.gradByPoints, gradXi);
+            //question函数具体作用
             normRetrictionLayer(xi, obj.vPolyIdx, obj.vPolytopes, cost, gradXi);
 
             return cost;
@@ -590,7 +591,7 @@ namespace gcopter
 
             return cost;
         }
-
+        //question:如何生成的最短直线轨迹
         static inline void getShortestPath(const Eigen::Vector3d &ini,
                                            const Eigen::Vector3d &fin,
                                            const PolyhedraV &vPolys,
@@ -695,7 +696,7 @@ namespace gcopter
             return true;
         }
 
-        //根据凸包和最短距离得到每段轨迹的起点和重点，根据最大速度和最段距离计进行时间分配
+        //根据凸包和最短距离得到每段轨迹的起点和重点，根据最大速度和最段距离计进行时间分配和路标点
         static inline void setInitial(const Eigen::Matrix3Xd &path,
                                       const double &speed,
                                       const Eigen::VectorXi &intervalNs,
@@ -710,7 +711,7 @@ namespace gcopter
             Eigen::Vector3d a, b, c;
             for (int i = 0, j = 0, k = 0, l; i < sizeM; i++)
             {
-                l = intervalNs(i);//第i个凸包轨迹个数
+                l = intervalNs(i);//第i个凸包有l段轨迹
                 a = path.col(i);
                 b = path.col(i + 1);
                 c = (b - a) / l;//第i个凸包内单个轨迹直线距离
@@ -731,16 +732,17 @@ namespace gcopter
         // penaltyWeights = [pos_weight, vel_weight, omg_weight, theta_weight, thrust_weight]^T
         // physicalParams = [vehicle_mass, gravitational_acceleration, horitonral_drag_coeff,
         //                   vertical_drag_coeff, parasitic_drag_coeff, speed_smooth_factor]^T
+        //question:参数含义理解
         inline bool setup(const double &timeWeight,
                           const Eigen::Matrix3d &initialPVA,
                           const Eigen::Matrix3d &terminalPVA,
                           const PolyhedraH &safeCorridor,
                           const double &lengthPerPiece,
-                          const double &smoothingFactor,//config文件1.0e-2
-                          const int &integralResolution,//config文件 16
+                          const double &smoothingFactor,//config文件1.0e-2  惩罚函数光滑
+                          const int &integralResolution,//config文件 16     控制梯形公式精度
                           const Eigen::VectorXd &magnitudeBounds,
                           const Eigen::VectorXd &penaltyWeights,
-                          const Eigen::VectorXd &physicalParams)
+                          const Eigen::VectorXd &physicalParams)//speed_smooth_factor具体含义和作用
         {
             rho = timeWeight;
             headPVA = initialPVA;
@@ -753,6 +755,7 @@ namespace gcopter
                     hPolytopes[i].leftCols<3>().rowwise().norm();
                 hPolytopes[i].array().colwise() /= norms;
             }
+            //question: 凸包的V表达，每一列都是一个顶点？
             if (!processCorridor(hPolytopes, vPolytopes))
             {
                 return false;
@@ -765,12 +768,13 @@ namespace gcopter
             penaltyWt = penaltyWeights;
             physicalPm = physicalParams;
             allocSpeed = magnitudeBd(0) * 3.0;
-            //根据起点中点和中间凸包生成优化轨迹初值
+            //question:函数理解
+            //1.根据起点中点和中间凸包生成优化轨迹初值
             //shortPath每一列都是一个中间点的三维坐标，位于两个凸包交集的位置
             getShortestPath(headPVA.col(0), tailPVA.col(0),
                             vPolytopes, smoothEps, shortPath);
             const Eigen::Matrix3Xd deltas = shortPath.rightCols(polyN) - shortPath.leftCols(polyN);
-            //记录每一个凸包里面有多少段轨迹
+            //2.记录每一个凸包里面有多少段轨迹
             pieceIdx = (deltas.colwise().norm() / lengthPerPiece).cast<int>();//.transpose();
         
             pieceIdx.array() += 1;
@@ -778,8 +782,9 @@ namespace gcopter
 
             temporalDim = pieceN;
             spatialDim = 0;
-            vPolyIdx.resize(pieceN - 1);//每一个内点所在的凸包
-            hPolyIdx.resize(pieceN);//每一段轨迹所在的凸包
+
+            vPolyIdx.resize(pieceN - 1);//  3.每一个路标点点所在的凸包
+            hPolyIdx.resize(pieceN);//      4.每一段轨迹所在的凸包
             for (int i = 0, j = 0, k; i < polyN; i++)
             {
                 k = pieceIdx(i);
@@ -822,7 +827,7 @@ namespace gcopter
             Eigen::Map<Eigen::VectorXd> tau(x.data(), temporalDim);
             Eigen::Map<Eigen::VectorXd> xi(x.data() + temporalDim, spatialDim);
 
-            //根据前端的凸多面体生成轨迹的端点和时间段
+            //根据前端的凸多面体生成路标点和时间段
             setInitial(shortPath, allocSpeed, pieceIdx, points, times);
             
             //优化前逆推一步，为新的优化变量提供初值
